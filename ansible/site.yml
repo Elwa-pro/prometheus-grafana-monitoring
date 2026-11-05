@@ -1,0 +1,81 @@
+---
+# Verifie (et corrige si besoin) l'etat attendu de la supervision sur les deux serveurs
+- name: Etat attendu sur les deux serveurs
+  hosts: all
+  become: true
+  tasks:
+    - name: SELinux en mode enforcing (controle seulement)
+      ansible.builtin.command: getenforce
+      register: selinux
+      changed_when: false
+      failed_when: selinux.stdout != "Enforcing"
+
+    - name: firewalld demarre et active
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: node_exporter demarre et active
+      ansible.builtin.service:
+        name: node_exporter
+        state: started
+        enabled: true
+
+    - name: Minuteur des indicateurs de securite actif
+      ansible.builtin.service:
+        name: security_metrics.timer
+        state: started
+        enabled: true
+
+- name: Serveur web srv-web01
+  hosts: web
+  become: true
+  tasks:
+    - name: nginx installe
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+
+    - name: Page de statut nginx (stub_status) en local seulement
+      ansible.builtin.copy:
+        dest: /etc/nginx/conf.d/status.conf
+        content: |
+          server {
+            listen 127.0.0.1:8080;
+            location /stub_status { stub_status; }
+          }
+      notify: Recharger nginx
+
+    - name: nginx demarre et active
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: nginx-prometheus-exporter demarre et actif
+      ansible.builtin.service:
+        name: nginx_exporter
+        state: started
+        enabled: true
+
+  handlers:
+    - name: Recharger nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+
+- name: Serveur de supervision srv-monitor
+  hosts: monitor
+  become: true
+  tasks:
+    - name: Services de supervision demarres et actifs
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - prometheus
+        - alertmanager
+        - blackbox_exporter
+        - grafana-server

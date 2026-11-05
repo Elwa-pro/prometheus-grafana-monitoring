@@ -1,0 +1,13 @@
+.env
+*.pem
+*.key
+id_*
+*.tfstate*
+*.tfvars
+kubeconfig*
+*vault*pass*
+node_pass
+*.log
+*.vdi
+*.vmdk
+*.sql

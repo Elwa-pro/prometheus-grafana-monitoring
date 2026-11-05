@@ -1,0 +1,21 @@
+route:
+  receiver: equipe-systeme
+  group_by: [alertname, instance]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity="critical"']
+      receiver: astreinte
+      repeat_interval: 1h
+receivers:
+  - name: equipe-systeme
+    webhook_configs:
+      - url: http://127.0.0.1:5001/warning
+  - name: astreinte
+    webhook_configs:
+      - url: http://127.0.0.1:5001/critical
+inhibit_rules:
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: [instance]

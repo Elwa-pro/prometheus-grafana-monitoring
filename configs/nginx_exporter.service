@@ -1,0 +1,14 @@
+[Unit]
+Description=NGINX Prometheus Exporter
+After=nginx.service
+
+[Service]
+User=nginx_exporter
+ExecStart=/usr/local/bin/nginx-prometheus-exporter --nginx.scrape-uri=http://127.0.0.1:8080/stub_status --web.listen-address=:9113
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

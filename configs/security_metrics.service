@@ -1,0 +1,6 @@
+[Unit]
+Description=Metriques securite pour node_exporter
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/security_metrics.sh

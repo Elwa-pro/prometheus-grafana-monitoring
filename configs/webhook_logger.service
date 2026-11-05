@@ -1,0 +1,10 @@
+[Unit]
+Description=Recepteur webhook des alertes (lab)
+
+[Service]
+User=nobody
+ExecStart=/usr/bin/python3 /usr/local/bin/webhook_logger.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

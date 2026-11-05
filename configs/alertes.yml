@@ -1,0 +1,81 @@
+groups:
+- name: ressources
+  rules:
+  - alert: CPUEleve
+    expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+    for: 5m
+    labels: {severity: warning}
+    annotations: {summary: "CPU > 80 % sur {{ $labels.instance }}"}
+  - alert: CPUCritique
+    expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 90
+    for: 5m
+    labels: {severity: critical}
+    annotations: {summary: "CPU > 90 % sur {{ $labels.instance }}"}
+  - alert: RAMElevee
+    expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 85
+    for: 5m
+    labels: {severity: warning}
+    annotations: {summary: "RAM > 85 % sur {{ $labels.instance }}"}
+  - alert: RAMCritique
+    expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 95
+    for: 2m
+    labels: {severity: critical}
+    annotations: {summary: "RAM > 95 % sur {{ $labels.instance }}"}
+  - alert: DisqueRempli80
+    expr: 100 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) > 80
+    for: 5m
+    labels: {severity: warning}
+    annotations: {summary: "Disque / > 80 % sur {{ $labels.instance }}"}
+  - alert: DisqueRempli90
+    expr: 100 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) > 90
+    for: 5m
+    labels: {severity: critical}
+    annotations: {summary: "Disque / > 90 % sur {{ $labels.instance }}"}
+  - alert: DisquePleinDans4h
+    expr: predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[1h], 4 * 3600) < 0
+    for: 10m
+    labels: {severity: warning}
+    annotations: {summary: "Disque / plein dans moins de 4 h sur {{ $labels.instance }}"}
+- name: disponibilite
+  rules:
+  - alert: HoteInjoignable
+    expr: up == 0
+    for: 1m
+    labels: {severity: critical}
+    annotations: {summary: "{{ $labels.instance }} injoignable"}
+  - alert: ServiceSecuriteArrete
+    expr: node_systemd_unit_state{name=~"sshd.service|firewalld.service|chronyd.service",state="active"} == 0
+    for: 1m
+    labels: {severity: critical}
+    annotations: {summary: "{{ $labels.name }} arrete sur {{ $labels.instance }}"}
+  - alert: SiteInaccessible
+    expr: probe_success == 0
+    for: 1m
+    labels: {severity: critical}
+    annotations: {summary: "Site {{ $labels.instance }} inaccessible"}
+  - alert: SiteLent
+    expr: probe_duration_seconds > 0.5
+    for: 5m
+    labels: {severity: warning}
+    annotations: {summary: "Site {{ $labels.instance }} lent (> 500 ms)"}
+  - alert: NginxArrete
+    expr: nginx_up == 0
+    for: 1m
+    labels: {severity: critical}
+    annotations: {summary: "nginx ne repond plus sur {{ $labels.instance }}"}
+- name: securite
+  rules:
+  - alert: EchecsConnexionSSH
+    expr: node_ssh_failed_logins_5m > 10
+    labels: {severity: warning}
+    annotations: {summary: "Plus de 10 echecs SSH en 5 min sur {{ $labels.instance }}"}
+  - alert: SELinuxDesactive
+    expr: node_selinux_enforcing != 1
+    for: 1m
+    labels: {severity: critical}
+    annotations: {summary: "SELinux n'est plus en Enforcing sur {{ $labels.instance }}"}
+  - alert: MisesAJourSecuriteEnAttente
+    expr: node_security_updates_pending > 0
+    for: 7d
+    labels: {severity: warning}
+    annotations: {summary: "Mises a jour de securite en attente depuis 7 j sur {{ $labels.instance }}"}
