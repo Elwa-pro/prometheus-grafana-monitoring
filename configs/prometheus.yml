@@ -1,0 +1,59 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    environment: lab
+    site: m2i
+
+rule_files:
+  - rules/*.yml
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          instance: srv-monitor
+
+  - job_name: node
+    scheme: https
+    basic_auth:
+      username: prometheus
+      password_file: /etc/prometheus/node_pass
+    tls_config:
+      ca_file: /etc/prometheus/node.crt
+    static_configs:
+      - targets: ['192.168.255.10:9100']
+        labels:
+          instance: srv-monitor
+          role: monitoring
+      - targets: ['192.168.255.11:9100']
+        labels:
+          instance: srv-web01
+          role: web
+  - job_name: nginx
+    static_configs:
+      - targets: ["192.168.255.11:9113"]
+        labels:
+          instance: srv-web01
+          role: web
+  - job_name: blackbox_http
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ["http://192.168.255.11"]
+        labels:
+          service: web
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["localhost:9093"]

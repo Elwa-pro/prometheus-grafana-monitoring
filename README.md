@@ -85,6 +85,13 @@ sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address
 sudo firewall-cmd --reload
 ```
 
+Prometheus est installé de la même façon ([configs/prometheus.service](configs/prometheus.service) : rétention de 15 jours, rechargement par `SIGHUP`). Sa configuration [configs/prometheus.yml](configs/prometheus.yml) collecte toutes les 15 s quatre jobs : `prometheus`, `node` (en https avec authentification), `nginx` et `blackbox_http`. Pour ce dernier, un `relabel_configs` envoie la cible à la sonde. La configuration charge les règles de `rules/` et envoie les alertes à Alertmanager. Avant chaque rechargement, on la valide :
+
+```bash
+promtool check config /etc/prometheus/prometheus.yml
+sudo systemctl reload prometheus
+```
+
 ### 2. Sécuriser la collecte (TLS + authentification)
 
 Sans protection, quiconque joint le port 9100 lit les métriques. Le script [scripts/enable_tls_node_exporter.sh](scripts/enable_tls_node_exporter.sh) fait le travail en une fois :
@@ -207,7 +214,7 @@ Démonstration de dérive : nginx est arrêté volontairement (`ansible web -b -
 1. Créer deux VM AlmaLinux 10 Minimal sur le même réseau. Si les IP sont différentes, les adapter dans les fichiers.
 2. Installer node_exporter sur les deux serveurs, puis Prometheus, Alertmanager, blackbox_exporter et nginx exporter à partir des archives officielles. Utiliser les unités de [configs](configs).
 3. Activer TLS et l'authentification avec `scripts/enable_tls_node_exporter.sh`.
-4. Copier `configs/alertes.yml` dans `/etc/prometheus/rules/`, le valider avec `promtool`, puis recharger Prometheus.
+4. Copier `configs/prometheus.yml` dans `/etc/prometheus/` et `configs/alertes.yml` dans `/etc/prometheus/rules/`, valider avec `promtool check config` et `promtool check rules`, puis recharger Prometheus.
 5. Installer Grafana avec `scripts/install_grafana.sh`, puis déployer le provisioning avec `scripts/deploy_grafana.sh`.
 6. Lancer `ansible-playbook -i ansible/inventory.ini ansible/site.yml -K` pour vérifier l'état attendu.
 
@@ -215,7 +222,7 @@ Démonstration de dérive : nginx est arrêté volontairement (`ansible web -b -
 
 ```
 ansible/   inventaire et playbook de conformité
-configs/   règles d'alerte et tests, Alertmanager, blackbox, unités systemd, provisioning Grafana
+configs/   prometheus.yml, règles d'alerte et tests, Alertmanager, blackbox, unités systemd, provisioning Grafana
 docs/      SLA et catalogue d'indicateurs, interprétation des incidents
 scripts/   TLS de node_exporter, indicateurs de sécurité, installation et déploiement de Grafana, webhook
 img/       captures
