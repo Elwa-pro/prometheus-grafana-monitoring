@@ -1,10 +1,10 @@
 # Cadre SLA et catalogue d'indicateurs
 
-> Contexte simulé : le client et ses exigences (SLA) sont fictifs, définis pour ce TP. Ils servent de fil conducteur pour choisir les indicateurs et les seuils.
+> Le client et ses exigences (SLA) sont fictifs. Je les ai définis pour ce projet afin de choisir les indicateurs et les seuils à partir d'engagements précis.
 
 ## 1. Service supervisé
 
-Une application web interne hébergée sur `srv-web01` (nginx), supervisée par `srv-monitor` (Prometheus, Alertmanager, Grafana). Environnement `lab`, réseau 192.168.255.0/24.
+Il s'agit d'une application web interne hébergée sur `srv-web01` (nginx) et supervisée depuis `srv-monitor` (Prometheus, Alertmanager, Grafana), dans l'environnement `lab` sur le réseau 192.168.255.0/24.
 
 ## 2. Engagements de service (SLA simulés)
 
@@ -53,15 +53,12 @@ Une application web interne hébergée sur `srv-web01` (nginx), supervisée par 
 | Requêtes par seconde | `rate(nginx_http_requests_total[2m])` | suivi |
 | Connexions actives | `nginx_connections_active` | suivi |
 
-## 4. Lien avec les critères de performance
+## 4. Pourquoi ces indicateurs
 
-- **Indicateurs pertinents** : chaque ligne répond à un engagement du tableau du paragraphe 2.
-- **Tenant compte des SLA** : seuils et durées (`for`) déduits des engagements.
-- **Exhaustivité** : trois familles couvertes, ressources, sécurité et performance applicative.
+Chaque ligne du catalogue répond à un engagement du paragraphe 2, et ses seuils comme ses durées (`for`) en découlent. Les trois familles (ressources, sécurité, performance applicative) couvrent à la fois l'état des serveurs, leur exposition aux attaques et ce que voit l'utilisateur du site.
 
 ## 5. Limites
 
-- Les SLA sont des hypothèses de travail, pas un contrat réel.
-- Les seuils sont posés a priori ; en exploitation réelle, on les ajusterait après quelques semaines de mesures.
-- La latence est mesurée par une sonde unique (pas un percentile applicatif réel).
-- Certains indicateurs du catalogue sont suivis sans règle d'alerte dans cette version (charge, redémarrage récent, code HTTP, expiration du certificat).
+Les SLA sont des hypothèses de travail et non un contrat. J'ai posé les seuils a priori : en exploitation, il faudrait les ajuster après quelques semaines de mesures. La latence vient d'une sonde unique, ce qui ne remplace pas un percentile mesuré par l'application.
+
+Enfin, quatre indicateurs du catalogue n'ont pas encore de règle d'alerte : la charge, le redémarrage récent, le code HTTP et l'expiration du certificat (ce dernier suppose un site en HTTPS).
